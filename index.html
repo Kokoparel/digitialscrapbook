@@ -414,25 +414,121 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* ── PRINT / EXPORT ── */
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* Print-only decorative frame elements */
+  .print-frame { display: none; }
+
   @media print {
-    body { overflow: visible !important; height: auto !important; background: white !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    body {
+      overflow: visible !important;
+      height: auto !important;
+      background: #f5f3ef !important;
+      margin: 0 !important;
+    }
+
     header, .pages-bar, .sidebar, .props-panel { display: none !important; }
     .workspace { display: block !important; overflow: visible !important; }
+
     .canvas-wrap {
       padding: 0 !important;
-      background: white !important;
-      display: block !important;
+      background: #f5f3ef !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 100vw !important;
+      min-height: 100vh !important;
       overflow: visible !important;
     }
+
     .scrapbook-canvas {
       box-shadow: none !important;
-      margin: 0 auto !important;
-      page-break-after: avoid;
+      margin: 18mm auto !important;
+      width: 174mm !important;
+      min-height: 240mm !important;
+      border-radius: 2px !important;
+      position: relative !important;
+      background: #ffffff !important;
+      /* elegant inset border */
+      outline: 1px solid #d4cec6 !important;
     }
+
+    /* Decorative corner marks */
+    .scrapbook-canvas::before,
+    .scrapbook-canvas::after {
+      content: '' !important;
+      display: block !important;
+      position: absolute !important;
+      width: 14mm !important;
+      height: 14mm !important;
+      border-color: #c8a96e !important;
+      border-style: solid !important;
+      z-index: 999 !important;
+    }
+    .scrapbook-canvas::before {
+      top: 5mm !important; left: 5mm !important;
+      border-width: 1px 0 0 1px !important;
+    }
+    .scrapbook-canvas::after {
+      top: 5mm !important; right: 5mm !important;
+      border-width: 1px 1px 0 0 !important;
+    }
+
+    /* Show print frame (bottom corners + footer) */
+    .print-frame { display: block !important; }
+
+    .print-footer {
+      position: absolute !important;
+      bottom: 5mm !important;
+      left: 5mm !important;
+      right: 5mm !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: flex-end !important;
+      pointer-events: none !important;
+    }
+    .print-footer-logo {
+      font-family: 'Playfair Display', serif !important;
+      font-size: 13px !important;
+      color: #c8a96e !important;
+      letter-spacing: 0.5px !important;
+      font-style: italic !important;
+    }
+    .print-footer-logo span {
+      font-style: normal !important;
+      font-weight: 700 !important;
+    }
+    .print-footer-pagenum {
+      font-family: 'Playfair Display', serif !important;
+      font-size: 9px !important;
+      color: #c4bdb4 !important;
+      letter-spacing: 2.5px !important;
+      text-transform: uppercase !important;
+    }
+    /* Bottom corner decorations */
+    .print-corner-bl,
+    .print-corner-br {
+      position: absolute !important;
+      bottom: 5mm !important;
+      width: 14mm !important;
+      height: 14mm !important;
+      border-color: #c8a96e !important;
+      border-style: solid !important;
+      pointer-events: none !important;
+    }
+    .print-corner-bl { left: 5mm !important; border-width: 0 0 1px 1px !important; }
+    .print-corner-br { right: 5mm !important; border-width: 0 1px 1px 0 !important; }
+
     .item-controls { display: none !important; }
     .canvas-item { outline: none !important; }
     .img-resize-handle { display: none !important; }
     .toast { display: none !important; }
+    .page-number { display: none !important; }
   }
 
   /* Animations */
@@ -502,6 +598,13 @@
     <div class="scrapbook-canvas" id="canvas">
       <div class="page-title-area">
         <div class="page-number" id="pageNum">— 01 —</div>
+      </div>
+      <!-- Print-only decorative elements -->
+      <div class="print-frame print-corner-bl"></div>
+      <div class="print-frame print-corner-br"></div>
+      <div class="print-frame print-footer">
+        <div class="print-footer-logo"><span>fo</span>lio</div>
+        <div class="print-footer-pagenum" id="printPageNum">— 01 —</div>
       </div>
     </div>
   </div>
@@ -586,7 +689,10 @@ function renderTabs() {
 
   // Update page number display
   const idx = pages.findIndex(p => p.id === currentPageId);
-  document.getElementById('pageNum').textContent = `— ${String(idx+1).padStart(2,'0')} —`;
+  const numStr = `— ${String(idx+1).padStart(2,'0')} —`;
+  document.getElementById('pageNum').textContent = numStr;
+  const pn = document.getElementById('printPageNum');
+  if (pn) pn.textContent = numStr;
 }
 
 function switchPage(pageId) {
