@@ -479,13 +479,13 @@
     <div class="sidebar-section">
       <div class="sidebar-label">Text</div>
       <div class="text-styles">
-        <button class="text-style-btn" onclick="addText('heading')">
+        <button class="text-style-btn" onmousedown="event.preventDefault()" onclick="addText('heading')">
           <div class="ts-title">Heading</div>
         </button>
-        <button class="text-style-btn" onclick="addText('body')">
+        <button class="text-style-btn" onmousedown="event.preventDefault()" onclick="addText('body')">
           <div class="ts-body">Body text</div>
         </button>
-        <button class="text-style-btn" onclick="addText('caption')">
+        <button class="text-style-btn" onmousedown="event.preventDefault()" onclick="addText('caption')">
           <div class="ts-caption">Caption / note</div>
         </button>
       </div>
@@ -515,24 +515,24 @@
         <div class="prop-row">
           <div class="prop-label">Rotation</div>
           <div class="rotate-btns">
-            <button class="rotate-btn" onclick="rotateSelected(-15)">↺ -15°</button>
-            <button class="rotate-btn" onclick="rotateSelected(15)">↻ +15°</button>
+            <button class="rotate-btn" onmousedown="event.preventDefault()" onclick="rotateSelected(-15)">↺ -15°</button>
+            <button class="rotate-btn" onmousedown="event.preventDefault()" onclick="rotateSelected(15)">↻ +15°</button>
           </div>
         </div>
         <div class="prop-row" id="opacityProp">
           <div class="prop-label">Opacity</div>
-          <input type="range" min="10" max="100" value="100" class="prop-input" style="padding:4px 0;" id="opacitySlider" oninput="setOpacity(this.value)">
+          <input type="range" min="10" max="100" value="100" class="prop-input" style="padding:4px 0;" id="opacitySlider" onmousedown="event.preventDefault()" oninput="setOpacity(this.value)">
         </div>
         <div class="prop-row" id="stickerSizeProp" style="display:none;">
           <div class="prop-label">Size</div>
-          <input type="range" min="20" max="120" value="40" class="prop-input" style="padding:4px 0;" id="stickerSizeSlider" oninput="setStickerSize(this.value)">
+          <input type="range" min="20" max="120" value="40" class="prop-input" style="padding:4px 0;" id="stickerSizeSlider" onmousedown="event.preventDefault()" oninput="setStickerSize(this.value)">
         </div>
         <div class="prop-row" id="fontColorProp" style="display:none;">
           <div class="prop-label">Color</div>
           <input type="color" value="#1a1814" class="prop-input" style="height:32px;padding:2px;" id="fontColorPicker" oninput="setFontColor(this.value)">
         </div>
-        <button class="btn btn-ghost" style="width:100%;margin-top:4px;font-size:12px;" onclick="deleteSelected()">🗑 Delete item</button>
-        <button class="btn btn-ghost" style="width:100%;margin-top:4px;font-size:12px;" onclick="duplicateSelected()">⧉ Duplicate</button>
+        <button class="btn btn-ghost" onmousedown="event.preventDefault()" style="width:100%;margin-top:4px;font-size:12px;" onclick="deleteSelected()">🗑 Delete item</button>
+        <button class="btn btn-ghost" onmousedown="event.preventDefault()" style="width:100%;margin-top:4px;font-size:12px;" onclick="duplicateSelected()">⧉ Duplicate</button>
       </div>
     </div>
   </div>
@@ -565,7 +565,7 @@ function init() {
 function renderStickers() {
   const grid = document.getElementById('stickerGrid');
   grid.innerHTML = stickers.map(s =>
-    `<div class="sticker-item" onclick="addSticker('${s}')">${s}</div>`
+    `<div class="sticker-item" onmousedown="event.preventDefault()" onclick="addSticker('${s}')">${s}</div>`
   ).join('');
 }
 
@@ -755,7 +755,6 @@ function createItemEl(item) {
   wrap.addEventListener('mousedown', e => {
     if (e.target.classList.contains('img-resize-handle')) return;
     if (e.target.contentEditable === 'true') return; // actively editing text
-    e.preventDefault();
     startDrag(e, item.id, wrap);
   });
   wrap.addEventListener('click', e => { e.stopPropagation(); selectItem(item.id); });
