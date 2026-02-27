@@ -678,6 +678,7 @@ function addItemToPage(item) {
   const el = createItemEl(item);
   document.getElementById('canvas').appendChild(el);
   el.classList.add('pop-in');
+  el.addEventListener('animationend', () => el.classList.remove('pop-in'), { once: true });
   selectItem(item.id);
   showToast('Added to canvas ✦');
 }
