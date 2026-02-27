@@ -1030,9 +1030,9 @@ async function exportPage() {
   btn.disabled = true;
 
   // Temporarily hide UI-only elements from capture
-  document.querySelectorAll('.print-frame').forEach(el => el.style.visibility = 'hidden');
+  document.querySelectorAll('.print-frame').forEach(el => el.style.display = 'none');
   const pageTitleArea = document.querySelector('.page-title-area');
-  if (pageTitleArea) pageTitleArea.style.visibility = 'hidden';
+  if (pageTitleArea) pageTitleArea.style.display = 'none';
 
   // Wait a frame for DOM to update
   await new Promise(r => setTimeout(r, 60));
@@ -1131,8 +1131,8 @@ async function exportPage() {
     console.error(err);
   } finally {
     // Hide print frame again
-    document.querySelectorAll('.print-frame').forEach(el => el.style.visibility = '');
-    if (pageTitleArea) pageTitleArea.style.visibility = '';
+    document.querySelectorAll('.print-frame').forEach(el => el.style.display = '');
+    if (pageTitleArea) pageTitleArea.style.display = '';
     btn.textContent = '↓ Export';
     btn.disabled = false;
   }
