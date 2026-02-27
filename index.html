@@ -1029,8 +1029,10 @@ async function exportPage() {
   btn.textContent = '⏳ Exporting…';
   btn.disabled = true;
 
-  // Temporarily show print frame decorations for capture
-  document.querySelectorAll('.print-frame').forEach(el => el.style.display = 'block');
+  // Temporarily hide UI-only elements from capture
+  document.querySelectorAll('.print-frame').forEach(el => el.style.visibility = 'hidden');
+  const pageTitleArea = document.querySelector('.page-title-area');
+  if (pageTitleArea) pageTitleArea.style.visibility = 'hidden';
 
   // Wait a frame for DOM to update
   await new Promise(r => setTimeout(r, 60));
@@ -1129,7 +1131,8 @@ async function exportPage() {
     console.error(err);
   } finally {
     // Hide print frame again
-    document.querySelectorAll('.print-frame').forEach(el => el.style.display = '');
+    document.querySelectorAll('.print-frame').forEach(el => el.style.visibility = '');
+    if (pageTitleArea) pageTitleArea.style.visibility = '';
     btn.textContent = '↓ Export';
     btn.disabled = false;
   }
