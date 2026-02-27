@@ -57,5 +57,3 @@ Fellow game masters and developers are welcome to contribute! Feel free to check
 **Farrel Athaillah Wijaya**
 * GitHub: [@Kokoparel](https://github.com/Kokoparel)
 
----
-*Built with ❤️, Vanilla JS, and a touch of Endless Magic.*
