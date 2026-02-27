@@ -290,12 +290,30 @@
     outline: none;
     border-radius: 2px;
     line-height: 1.4;
-    cursor: text;
+    position: relative;
   }
   .text-item:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
   .text-heading { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--ink); }
   .text-body { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink-soft); }
   .text-caption { font-family: 'Playfair Display', serif; font-style: italic; font-size: 13px; color: var(--ink-soft); }
+
+  .text-item[contenteditable="false"]:hover::after {
+    content: 'double-click to edit';
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    font-size: 10px;
+    color: var(--ink-soft);
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+    pointer-events: none;
+    font-style: normal;
+    font-weight: 400;
+  }
 
   /* STICKER ITEM */
   .sticker-canvas {
@@ -394,6 +412,28 @@
     z-index: 9999;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── PRINT / EXPORT ── */
+  @media print {
+    body { overflow: visible !important; height: auto !important; background: white !important; }
+    header, .pages-bar, .sidebar, .props-panel { display: none !important; }
+    .workspace { display: block !important; overflow: visible !important; }
+    .canvas-wrap {
+      padding: 0 !important;
+      background: white !important;
+      display: block !important;
+      overflow: visible !important;
+    }
+    .scrapbook-canvas {
+      box-shadow: none !important;
+      margin: 0 auto !important;
+      page-break-after: avoid;
+    }
+    .item-controls { display: none !important; }
+    .canvas-item { outline: none !important; }
+    .img-resize-handle { display: none !important; }
+    .toast { display: none !important; }
+  }
 
   /* Animations */
   @keyframes popIn {
@@ -650,7 +690,7 @@ function createItemEl(item) {
   wrap.style.top = item.y + 'px';
   wrap.style.transform = `rotate(${item.rotation || 0}deg)`;
   wrap.style.opacity = item.opacity || 1;
-  
+
   // Controls
   const ctrls = document.createElement('div');
   ctrls.className = 'item-controls';
@@ -674,25 +714,48 @@ function createItemEl(item) {
   else if (item.type === 'text') {
     const div = document.createElement('div');
     div.className = `text-item text-${item.style}`;
-    div.contentEditable = 'true';
+    div.contentEditable = 'false';
     div.textContent = item.text || '';
+    div.style.cursor = 'move';
+    div.style.userSelect = 'none';
     div.addEventListener('input', () => { item.text = div.textContent; });
-    div.addEventListener('mousedown', e => e.stopPropagation());
-    div.addEventListener('focus', () => selectItem(item.id));
+    // Double-click enters edit mode
+    div.addEventListener('dblclick', e => {
+      e.stopPropagation();
+      div.contentEditable = 'true';
+      div.style.cursor = 'text';
+      div.style.userSelect = 'auto';
+      div.focus();
+      // place cursor at end
+      const range = document.createRange();
+      range.selectNodeContents(div);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+    div.addEventListener('blur', () => {
+      div.contentEditable = 'false';
+      div.style.cursor = 'move';
+      div.style.userSelect = 'none';
+      item.text = div.textContent;
+    });
     wrap.appendChild(div);
   }
   else if (item.type === 'sticker') {
     const span = document.createElement('div');
     span.className = 'sticker-canvas';
     span.style.fontSize = (item.size || 40) + 'px';
+    span.style.pointerEvents = 'none';
     span.textContent = item.emoji;
     wrap.appendChild(span);
   }
 
-  // Dragging
+  // Dragging — works for all item types; text editing only on dblclick
   wrap.addEventListener('mousedown', e => {
     if (e.target.classList.contains('img-resize-handle')) return;
-    if (e.target.contentEditable === 'true') return;
+    if (e.target.contentEditable === 'true') return; // actively editing text
+    e.preventDefault();
     startDrag(e, item.id, wrap);
   });
   wrap.addEventListener('click', e => { e.stopPropagation(); selectItem(item.id); });
@@ -847,7 +910,10 @@ function setFontColor(val) {
 
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
 function exportPage() {
-  showToast('Tip: Use browser Print → Save as PDF to export!');
+  document.querySelectorAll('.canvas-item').forEach(el => el.classList.remove('selected'));
+  selectedItem = null;
+  updatePropsPanel();
+  setTimeout(() => window.print(), 80);
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
