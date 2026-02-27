@@ -1029,11 +1029,6 @@ async function exportPage() {
   btn.textContent = '⏳ Exporting…';
   btn.disabled = true;
 
-  // Temporarily hide UI-only elements from capture
-  document.querySelectorAll('.print-frame').forEach(el => el.style.display = 'none');
-  const pageTitleArea = document.querySelector('.page-title-area');
-  if (pageTitleArea) pageTitleArea.style.display = 'none';
-
   // Wait a frame for DOM to update
   await new Promise(r => setTimeout(r, 60));
 
@@ -1044,6 +1039,7 @@ async function exportPage() {
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
+      ignoreElements: el => el.classList.contains('print-frame') || el.classList.contains('page-title-area') || el.classList.contains('item-controls') || el.classList.contains('img-resize-handle'),
     });
 
     // Draw onto a final canvas with cream paper background + border
@@ -1130,10 +1126,7 @@ async function exportPage() {
     showToast('Export failed — try again');
     console.error(err);
   } finally {
-    // Hide print frame again
-    document.querySelectorAll('.print-frame').forEach(el => el.style.display = '');
-    if (pageTitleArea) pageTitleArea.style.display = '';
-    btn.textContent = '↓ Export';
+    btn.textContent = '↓ Download PNG';
     btn.disabled = false;
   }
 }
