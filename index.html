@@ -538,6 +538,7 @@
   }
   .pop-in { animation: popIn 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -545,8 +546,8 @@
 <header>
   <div class="logo">fo<span>li</span>o</div>
   <div class="header-actions">
-    <button class="btn btn-ghost" onclick="exportPage()">↓ Export</button>
-    <button class="btn btn-accent" onclick="showToast('Your scrapbook is auto-saved!')">✦ Save</button>
+    <button class="btn btn-ghost" onclick="showToast('Your scrapbook is auto-saved!')">✦ Save</button>
+    <button class="btn btn-accent" onclick="exportPage()">↓ Download PNG</button>
   </div>
 </header>
 
@@ -1015,11 +1016,123 @@ function setFontColor(val) {
 }
 
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
-function exportPage() {
+async function exportPage() {
+  // Deselect everything
   document.querySelectorAll('.canvas-item').forEach(el => el.classList.remove('selected'));
   selectedItem = null;
   updatePropsPanel();
-  setTimeout(() => window.print(), 80);
+
+  const canvasEl = document.getElementById('canvas');
+  const btn = document.querySelector('.btn-accent');
+
+  // Show loading state
+  btn.textContent = '⏳ Exporting…';
+  btn.disabled = true;
+
+  // Temporarily show print frame decorations for capture
+  document.querySelectorAll('.print-frame').forEach(el => el.style.display = 'block');
+
+  // Wait a frame for DOM to update
+  await new Promise(r => setTimeout(r, 60));
+
+  try {
+    const captureCanvas = await html2canvas(canvasEl, {
+      scale: 2.5,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
+
+    // Draw onto a final canvas with cream paper background + border
+    const padding = 60;
+    const finalW = captureCanvas.width + padding * 2;
+    const finalH = captureCanvas.height + padding * 2;
+
+    const out = document.createElement('canvas');
+    out.width = finalW;
+    out.height = finalH;
+    const ctx = out.getContext('2d');
+
+    // Paper background
+    ctx.fillStyle = '#f5f3ef';
+    ctx.fillRect(0, 0, finalW, finalH);
+
+    // Subtle noise texture (grain)
+    for (let i = 0; i < 18000; i++) {
+      const x = Math.random() * finalW;
+      const y = Math.random() * finalH;
+      const alpha = Math.random() * 0.035;
+      ctx.fillStyle = `rgba(100,90,70,${alpha})`;
+      ctx.fillRect(x, y, 1, 1);
+    }
+
+    // White canvas area with soft shadow
+    ctx.save();
+    ctx.shadowColor = 'rgba(26,24,20,0.13)';
+    ctx.shadowBlur = 40;
+    ctx.shadowOffsetY = 6;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(padding, padding, captureCanvas.width, captureCanvas.height);
+    ctx.restore();
+
+    // Draw captured scrapbook content
+    ctx.drawImage(captureCanvas, padding, padding);
+
+    // Thin outer border on white area
+    ctx.strokeStyle = '#d4cec6';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(padding, padding, captureCanvas.width, captureCanvas.height);
+
+    // Gold corner L-marks
+    const cmSize = 44;
+    const cmOffset = 18;
+    const cmX = padding + cmOffset;
+    const cmY = padding + cmOffset;
+    const cmX2 = padding + captureCanvas.width - cmOffset;
+    const cmY2 = padding + captureCanvas.height - cmOffset;
+    ctx.strokeStyle = '#c8a96e';
+    ctx.lineWidth = 2;
+
+    // top-left
+    ctx.beginPath(); ctx.moveTo(cmX, cmY + cmSize); ctx.lineTo(cmX, cmY); ctx.lineTo(cmX + cmSize, cmY); ctx.stroke();
+    // top-right
+    ctx.beginPath(); ctx.moveTo(cmX2 - cmSize, cmY); ctx.lineTo(cmX2, cmY); ctx.lineTo(cmX2, cmY + cmSize); ctx.stroke();
+    // bottom-left
+    ctx.beginPath(); ctx.moveTo(cmX, cmY2 - cmSize); ctx.lineTo(cmX, cmY2); ctx.lineTo(cmX + cmSize, cmY2); ctx.stroke();
+    // bottom-right
+    ctx.beginPath(); ctx.moveTo(cmX2 - cmSize, cmY2); ctx.lineTo(cmX2, cmY2); ctx.lineTo(cmX2, cmY2 - cmSize); ctx.stroke();
+
+    // Footer: page number right, logo left
+    const footerY = finalH - 22;
+    ctx.font = 'italic 700 22px "Playfair Display", Georgia, serif';
+    ctx.fillStyle = '#c8a96e';
+    ctx.fillText('folio', 30, footerY);
+
+    const idx = pages.findIndex(p => p.id === currentPageId);
+    const numStr = `— ${String(idx+1).padStart(2,'0')} —`;
+    ctx.font = '300 15px "DM Sans", sans-serif';
+    ctx.fillStyle = '#c4bdb4';
+    ctx.textAlign = 'right';
+    ctx.letterSpacing = '3px';
+    ctx.fillText(numStr, finalW - 30, footerY);
+
+    // Trigger download
+    const link = document.createElement('a');
+    link.download = `folio-page-${String(idx+1).padStart(2,'0')}.png`;
+    link.href = out.toDataURL('image/png');
+    link.click();
+
+    showToast('Exported! ✦');
+  } catch(err) {
+    showToast('Export failed — try again');
+    console.error(err);
+  } finally {
+    // Hide print frame again
+    document.querySelectorAll('.print-frame').forEach(el => el.style.display = '');
+    btn.textContent = '↓ Export';
+    btn.disabled = false;
+  }
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
